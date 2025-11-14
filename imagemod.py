@@ -4,8 +4,16 @@ import numpy as np
 
 
 class ImageMod:
-    def __init__(self, symbol_list, dimensions, dfont, inverted, colormation, bw):
-        self.symbol_list = symbol_list
+    def __init__(self, symbol_shade, dimensions, dfont, inverted, colormation, bw):
+        self.symbol_shade = symbol_shade
+
+        self.symbol_list = sorted(list(symbol_shade.items()), key=lambda x: x[1])
+        # Change last item
+
+        last_item = self.symbol_list.pop()
+        last_item = (last_item[0], 256)
+        self.symbol_list.append(last_item)
+        
         self.symbol_dimensions = dimensions
         self.font = dfont
         self.colormation = False
@@ -77,9 +85,9 @@ class ImageMod:
             
 
             # TODO: fix
-            c_red = (self.unlinearize_channel(c_red) * 255).astype(np.uint8)
-            c_blue = (self.unlinearize_channel(c_blue) * 255).astype(np.uint8)
-            c_green = (self.unlinearize_channel(c_green) * 255).astype(np.uint8)
+            c_red = (self.unlinearize_channel(c_red) * 255)
+            c_blue = (self.unlinearize_channel(c_blue) * 255)
+            c_green = (self.unlinearize_channel(c_green) * 255)
         
         while i < len(lines):
             line = lines[i]
@@ -91,7 +99,27 @@ class ImageMod:
         i = 0
         if self.colormation:
             while i < len(line):
-                drawing.text((i*self.symbol_dimensions[0], y), line[i], font=self.font, fill=(c_red[int(y/self.symbol_dimensions[1]), i], c_blue[int(y/self.symbol_dimensions[1]), i], c_green[int(y/self.symbol_dimensions[1]), i]))
+                target_red = c_red[int(y/self.symbol_dimensions[1]), i]
+                target_blue = c_blue[int(y/self.symbol_dimensions[1]), i]
+                target_green = c_green[int(y/self.symbol_dimensions[1]), i]
+
+                darkness = self.symbol_shade[line[i]]
+                darkness_value = (darkness)/255
+                saturation_value = darkness_value*2 # hit it with lots of saturation since everything is kind of white
+                # https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
+                # Cheap fast way of increasing saturation
+                grays = 0.2989 * target_red + 0.5870 * target_green + 0.1140 * target_blue
+                
+                desired_red = -grays * (saturation_value) + target_red * (1 + saturation_value)
+                desired_blue = -grays * (saturation_value) + target_blue * (1 + saturation_value)
+                desired_green = -grays * (saturation_value) + target_green * (1 + saturation_value)
+
+                clamped_lightness = (1 - darkness_value) * 0.2 + 0.8
+                desired_red *= clamped_lightness
+                desired_blue *= clamped_lightness
+                desired_green *= clamped_lightness
+                
+                drawing.text((i*self.symbol_dimensions[0], y), line[i], font=self.font, fill=(int(desired_red), int(desired_blue), int(desired_green)))
                 i += 1
         else:
             while i < len(line):

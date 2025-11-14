@@ -96,16 +96,5 @@ class ShadeGen:
                     symbol_shade[my_text] = shade
                 #img.save(str(i) + ".png")
 
-        # Then partition the space 0-255 to each symbol
-        shade_list = sorted(list(symbol_shade.items()), key=lambda x: x[1])
-        new_shade_list = []
-        i = 0
-        while i < len(shade_list)-1:
-            high_value = (shade_list[i][1] + shade_list[i+1][1]) / 2
-            new_shade_list.append((shade_list[i][0], high_value))
-            i += 1
-        # And the last value of the list
-        new_shade_list.append((shade_list[i][0], 256))
-
         print("Got the characters to use and the shade values")
-        return new_shade_list, (most_common_width, max_height), self.font
+        return symbol_shade, (most_common_width, max_height), self.font
