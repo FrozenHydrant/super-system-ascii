@@ -90,7 +90,6 @@ class ShadeGen:
                 img_array = np.array(img.getdata())
                 shade = float(np.average(img_array))
 
-                # Though we should put the character code, instead of the converted text
                 if self.inverted:
                     symbol_shade[my_text] = 255-shade
                 else:

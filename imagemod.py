@@ -20,7 +20,7 @@ class ImageMod:
             self.colors = 0
 
         # Colormation will override invertedness option and cheats
-        if colormation:
+        if colormation and not bw:
             self.colormation = True
             self.bg_colors = (255,255,255)
             self.colors = (0,0,0)
@@ -29,8 +29,6 @@ class ImageMod:
         # Bw will modify all other color options
         if bw:
             self.bw = True
-            self.bg_colors = 255
-            self.colors = 0
             self.image_mode = "1"
             
 
