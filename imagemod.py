@@ -30,7 +30,17 @@ class ImageMod:
         if bw:
             self.bw = True
             self.image_mode = "1"
-            
+
+    def linearize_channel(self, c_channel):
+        # Taken from https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+        c_channel[c_channel <= 0.04045] = c_channel[c_channel <= 0.04045] / 12.92
+        c_channel[c_channel > 0.04045] = ((c_channel[c_channel > 0.04045] + 0.055) / 1.055)**2.4
+        return c_channel
+
+    def unlinearize_channel(self, c_channel):
+        c_channel[c_channel <= 0.0031308] = c_channel[c_channel <= 0.0031308] * 12.92
+        c_channel[c_channel > 0.0031308] = 1.055 * c_channel[c_channel > 0.0031308]**(1/2.4) - 0.055
+        return c_channel
 
     def set_image(self, image_path):
         self.image = Image.open(image_path)
@@ -60,11 +70,16 @@ class ImageMod:
             c_green = self.shrink_image(c_green) / 255
 
             # Get rid of the luminance component
-            # TODO
+            # Since it has already been encoded by the characters (https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color)
+            c_red = self.linearize_channel(c_red)
+            c_blue = self.linearize_channel(c_blue)
+            c_green = self.linearize_channel(c_green)
             
-            c_red = (c_red * 255).astype(np.uint8)
-            c_blue = (c_blue * 255).astype(np.uint8)
-            c_green = (c_green * 255).astype(np.uint8)
+
+            # TODO: fix
+            c_red = (self.unlinearize_channel(c_red) * 255).astype(np.uint8)
+            c_blue = (self.unlinearize_channel(c_blue) * 255).astype(np.uint8)
+            c_green = (self.unlinearize_channel(c_green) * 255).astype(np.uint8)
         
         while i < len(lines):
             line = lines[i]
